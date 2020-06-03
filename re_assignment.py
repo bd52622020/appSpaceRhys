@@ -1,6 +1,6 @@
 import re 
  
-pattern= r"We.*Data$" 
+pattern= r"^We.*Data$" 
 
 txt = "We love programming with Big Data" 
 

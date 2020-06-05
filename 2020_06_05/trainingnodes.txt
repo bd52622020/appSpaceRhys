@@ -1,0 +1,9 @@
+how does multiprocessing and multithreading work in python?
+
+Python was originally written without multiproccesing or multithreading. Modules were later introduced to implement these features. These include concurrency, threading, asyncio and multiprocessing.
+
+Multithreading is not truly parallel, but instead creates multiple threads for different tasks and shares a single process which will share processor time on a single core. This type of concurrency is good for tasks which are I/O limited and for user interfaces (to prevent one task from locking the UI). Multithreading adds overhead so will execute slower than sequential code for threads that are processor limited.
+
+Multiprocessing is a type of concurrency that is parallel and creates seperate Python instances for different tasks. This allows a program to execute code on more than one physical core and is good for tasks that are CPU limited so long as there are is more than one core available to run processes on. Multiprocessing adds overhead so will execute slower than sequential code when only one core is available.
+
+For both these options, it should be noted that Python was written without concurrency in mind and is not inherently threadsafe which means that race conditions can occur. To prevent memory or datastructures being accessed while other processes are still using them they can be locked and, when implemented correctly, this makes the code thread safe.  

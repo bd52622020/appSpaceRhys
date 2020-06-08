@@ -2,9 +2,8 @@
 from re import findall
 
 def main(str1):
-    strl = len(str1)
     pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[$#@]).{6,16}$"
-    if findall(pattern, str1) and strl > 5 and strl < 17:
+    if findall(pattern, str1):
         print("Valid.")
     else:
         print("Invalid.")

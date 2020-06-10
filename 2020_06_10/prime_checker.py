@@ -1,19 +1,15 @@
 #!/usr/bin/env python
 
 
-def main(limit):
-    
-    primes = []
-    for n in range(1,limit + 1,1):  
-        if n > 1:
-            if 2 not in primes:
-                primes.append(2)
-            for i in range(2,n):  
-                if n % i == 0 or n in primes:  
+def main(upper):
+  
+    for num in range(1,upper + 1):  
+        if num > 1:  
+            for i in range(2,num):  
+                if (num % i) == 0:  
                     break  
-                else:  
-                    primes.append(n)
-    print(primes)
+            else:  
+                print(num)  
     
 if __name__ == "__main__":
     x = input("Please enter a number: ")    

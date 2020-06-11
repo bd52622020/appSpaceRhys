@@ -1,5 +1,0 @@
-How  many words ?
-How  many lines?
-How  many vowels ?
-How many  numbers ? 
-

@@ -13,26 +13,23 @@ from pyspark.sql import SQLContext
 from itertools import chain
 import pyspark.sql.functions as F
 from sys import argv
-from io import open # workaround for open() encoding bug
 
 
 #This function returns a movie names dict.
-def loadMovieNames(dir_prefix):
+def loadMovieNames(f):
     movie_names = {}
-    with open(dir_prefix + "/u.item",encoding = "ISO-8859-1") as f:
-        for line in f: # for each line
-            fields = line.split('|') #turn line into list of items
-            movie_names[int(fields[0])] = fields[1] #adds name to dict with movie id as the name's key.
+    for line in f: # for each line
+        fields = line.split('|') #turn line into list of items
+        movie_names[int(fields[0])] = fields[1] #adds name to dict with movie id as the name's key.
     return movie_names
 
 #This function returns a genres dict.
-def loadGenres(dir_prefix):
+def loadGenres(f):   
     genre_names = {}
-    with open(dir_prefix + "/u.genre",encoding = "ISO-8859-1") as f:
-        for line in f: # for each line
-            fields = line.split('|') #turn line into list of items
-            if len(fields) == 2:
-                genre_names[int(fields[1])] = fields[0] #adds genre to dict with genre id as the key.
+    for line in f: # for each line
+        fields = line.split('|') #turn line into list of items
+        if len(fields) == 2:
+            genre_names[int(fields[1])] = fields[0] #adds genre to dict with genre id as the key.
     return genre_names
 
 #function to parse files according to provided type list
@@ -81,9 +78,16 @@ def genreReplace(line_dict,name_dict):
     
 def main():
     
+    try:
+        argv[1]
+    except:
+        print("ml-100k directory must be supplied as argument")
+        exit()
+    
     # The main script - create our SparkContext
-    conf = SparkConf().setAppName("WorstMovies")
+    conf = SparkConf().setAppName("MovieLens")
     sc = SparkContext(conf = conf)
+    sc.setLogLevel("WARN")
     sq = SQLContext(sc)
 
     # Load necessary files
@@ -91,6 +95,8 @@ def main():
     data_f = sc.textFile(dir_prefix + "/u.data")
     user_f = sc.textFile(dir_prefix +"/u.user")
     item_f = sc.textFile(dir_prefix +"/u.item")
+    genre_f = sc.textFile(dir_prefix +"/u.genre")
+    
     
     # Define types
     data_t = ['int','int','float','timestamp']
@@ -99,9 +105,9 @@ def main():
               , 'int', 'int', 'int', 'int', 'int', 'int', 'int', 'int']
     
     # Create required dicts, lists and alias maps
-    movie_names = loadMovieNames(dir_prefix)
+    movie_names = loadMovieNames(item_f.collect())
     name_map = F.create_map([F.lit(x) for x in chain(*movie_names.items())])
-    genre_names = loadGenres(dir_prefix)
+    genre_names = loadGenres(genre_f.collect())
     genre_cols = list(genre_names.values())
     genre_cols.insert(0,'release_date')
     genre_cols.insert(0,'movie_id')
@@ -155,7 +161,7 @@ def main():
     
     # Q8.Print the list of zip codes corresponding to the highest number of users that rated movies. 
     print("\nQuestion 8:")
-    user_g.select('zip_code').groupBy('zip_code').count().orderBy('count', ascending=False).limit(10).show()
+    user_g.select('zip_code').groupBy('zip_code').count().orderBy('count', ascending=False).show()
     
     # Q9.Find the most rated movie by users in the age group 20 to 25.
     print("\nQuestion 9:")
@@ -165,11 +171,11 @@ def main():
     # Q10.Print the list of movies that were rated after year 1960. Is this question correct? Should it be "made" after 1960?
     print("\nQuestion 10:")
     data_g.select('movie_id','timestamp').filter(data_g.timestamp >= datetime(1960, 1, 1))\
-    .limit(10).select(name_map[data_g['movie_id']].alias('movie_name')).show(truncate=False)
+    .select(name_map[data_g['movie_id']].alias('movie_name')).show(truncate=False)
     
     # Bonus. Convert UnixTimeStamp in timestamp column of u.data to human readable date 
     print("\nBonus Question:")
-    data_g.select('timestamp').show(1)
+    data_g.select('timestamp').show()
 
 if __name__ == "__main__":
     main()

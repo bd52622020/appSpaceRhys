@@ -21,7 +21,7 @@ try:
     fp.set_preference('browser.download.useDownloadDir', True)
     fp.set_preference("browser.helperApps.neverAsk.saveToDisk", 'application/x-gzip')
     opts = Options()
-    opts.headless = False
+    opts.headless = True
     browser = Firefox(firefox_profile=fp, options=opts)
     actions = ActionChains(browser)
 except:

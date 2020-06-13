@@ -21,7 +21,7 @@ try:
     fp.set_preference('browser.download.useDownloadDir', True)
     fp.set_preference("browser.helperApps.neverAsk.saveToDisk", 'application/x-gzip')
     opts = Options()
-    opts.headless = True
+    opts.headless = False
     browser = Firefox(firefox_profile=fp, options=opts)
     actions = ActionChains(browser)
 except:
@@ -30,7 +30,7 @@ except:
 
 #navigate landing page
 try:
-    browser.get('https://www.oracle.com/java/technologies/javase-jdk8-downloads.html')
+    browser.get('https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html')
 except:
     print >> stderr, "Could not reach jdk8 landing page."
     exit()

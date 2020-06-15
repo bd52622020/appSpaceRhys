@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 def main(dict1):
-    list1 = {k for (k,v) in dict1.items() if v < 5000}
-    result = list(map(lambda x: x.upper(), list1))
+    result = {k.upper() for (k,v) in dict1.items() if v < 5000}
     print(result)
     return result
     

@@ -30,7 +30,7 @@ except:
 
 #navigate landing page
 try:
-    browser.get('https://www.oracle.com/java/technologies/javase-jdk8-downloads.html')
+    browser.get('https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html')
 except:
     print >> stderr, "Could not reach jdk8 landing page."
     exit()

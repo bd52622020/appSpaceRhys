@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 def main(dict1):
-    dict2 = {k:v for (k,v) in dict1.items() if v < 5000}
-    result = list(map(lambda x: x.upper(), list(dict2.keys())))
+    list1 = list({k for (k,v) in dict1.items() if v < 5000})
+    result = list(map(lambda x: x.upper(), list1))
     print(result)
     return result
     

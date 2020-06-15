@@ -1,0 +1,18 @@
+#enter hbase cli
+hbase shell
+
+#create u.data table
+create 'data', 'user_id', 'item_id', 'rating', 'timestamp'
+
+#create u.item table. Note that movie_id is missing as that will be the HBASE_ROW_KEY
+create 'item', 'movie_title' , 'release_date' , 'video_release_date', 'IMDb_URL', 'unknown', 'Action', 'Adventure', 'Animation', "Children's", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir', 'Horror', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western'
+
+ctrl-d
+
+#Uses Movie Id as row key
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="|" -Dimporttsv.columns="HBASE_ROW_KEY, movie_title , release_date , video_release_date, IMDb_URL, unknown, Action, Adventure, Animation, Children's, Comedy, Comedy, Crime, Documentary, Drama, Fantasy, Film-Noir, Horror, Musical, Mystery, Romance, Sci-Fi, Thriller, War, Western" item "hdfs:///user/maria_dev/data/ml-100k/u.item"
+
+#Prepare u.data for import by replacing variable whitespace with commas and creating a unique id in u.data. Could potentially restructure to use user_id + item_id as composite key. 
+hdfs dfs -cat hdfs:///user/maria_dev/data/ml-100k/u.data | nl | sed 's/\s\+/,/g' | sed 's/^.//g' | hdfs dfs -put - hdfs:///user/maria_dev/data/ml-100k/u.data_prepended
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="HBASE_ROW_KEY, user_id, item_id, rating, timestamp" data "hdfs:///user/maria_dev/data/ml-100k/u.data_prepended"
+

@@ -1,0 +1,61 @@
+#Prepare data for import by replacing variable whitespace with commas in u.data and creating a unique id in both.
+hdfs dfs -cat hdfs:///user/maria_dev/data/ml-100k/u.data | sed -e "s/^/$(uuidgen),/" | sed 's/\s\+/,/g' | hdfs dfs -put - hdfs:///user/maria_dev/data/ml-100k/u.data_cass_prepended
+
+hdfs dfs -cat hdfs:///user/maria_dev/data/ml-100k/u.item | sed -e "s/^/$(uuidgen)|/" | hdfs dfs -put - hdfs:///user/maria_dev/data/ml-100k/u.item_cass_prepended
+
+#Enter CQL CLI
+cqlsh
+
+#Create Keyspace
+CREATE KEYSPACE movie_lens
+  WITH REPLICATION = { 
+   'class' : 'SimpleStrategy', 
+   'replication_factor' : 1 
+  };
+
+#Create Tables
+CREATE TABLE movie_lens.item (
+  id UUID PRIMARY KEY,
+  movie_id int,
+  movie_title text, 
+  release_date text, 
+  video_release_date text, 
+  IMDb_URL text,
+  unknown Boolean,
+  Action Boolean,
+  Adventure Boolean,
+  Animation Boolean,
+  Childrens Boolean,
+  Comedy Boolean,
+  Crime Boolean,
+  Documentary Boolean,
+  Drama Boolean,
+  Fantasy Boolean,
+  Film_Noir Boolean,
+  Horror Boolean,
+  Musical Boolean,
+  Mystery Boolean,
+  Romance Boolean,
+  Sci_Fi Boolean,
+  Thriller Boolean,
+  War Boolean,
+  Western Boolean
+);
+
+CREATE TABLE movie_lens.data (
+  id UUID PRIMARY KEY,
+  user_id int,
+  item_id int, 
+  rating int, 
+  time_stamp timestamp
+);
+
+#back into normal shell as cqlsh can't resolve hdfs URI.
+ctrl-c
+
+#load tables
+hdfs dfs -cat hdfs:///user/maria_dev/data/ml-100k/u.data_cass_prepended | cqlsh -e "COPY movie_lens.data (id, user_id, item_id, rating, time_stamp) FROM STDIN WITH DELIMITER = ',';"
+
+hdfs dfs -cat hdfs:///user/maria_dev/data/ml-100k/u.item_cass_prepended | cqlsh -e "COPY movie_lens.item (id, movie_id, movie_title, release_date, video_release_date, IMDb_URL, unknown, Action, Adventure, Animation, Childrens, Comedy, Crime, Documentary, Drama, Fantasy, Film_Noir, Horror, Musical, Mystery, Romance, Sci_Fi, Thriller, War, Western) FROM STDIN WITH DELIMITER = '|';"
+
+

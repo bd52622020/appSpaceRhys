@@ -1,0 +1,9 @@
+a. map-reduce HDFS and YARN.
+
+b. Name nodes only contain metadata recording where data is stored. Data nodes actually store the data.
+
+c. JPS checks the status of hadoop daemons.
+
+d. metadata in hadoop represents the hadoop directory structure.
+
+e. a block is the amount of space referenced by a single address. The block size is 64MB as too small a size would produce very large amounts of metadata and larger would be an inefficient use of storage.

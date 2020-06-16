@@ -19,6 +19,6 @@ print(char_species_df["species"].dropna().value_counts(sort=True))
 print(planets_df[['name','population']].dropna().sort_values(by=['population'],ascending=False))
 
 #Insight 3: Largest starships. sorted by longest down.
-starships_df['length'] = starships_df['length'].replace(',','.').astype(float)
+starships_df['length'] = starships_df['length'].apply(lambda x: str(x).replace(',','.')).astype(float)
 print(starships_df[['name','length']].dropna().sort_values(by=['length'],ascending=False))
 

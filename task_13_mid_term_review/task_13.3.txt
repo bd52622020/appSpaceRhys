@@ -1,7 +1,0 @@
-a. chmod +x <file name>
-
-b. the shebang (#!) tells the shell which executable it should run.
-
-c. $<variable name>
-
-

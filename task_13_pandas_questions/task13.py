@@ -28,6 +28,6 @@ print("\nPassengers over 30: " + str(titanic_df[(titanic_df["Age"]>30) & (titani
 
 #Q1.5
 print("\n\nQuestion 1.5:\n")
-titanic_child = titanic_df.where(titanic_df['Age'] < 18).pivot_table( index='Sex')
-titanic_adult = titanic_df.where(titanic_df['Age'] >= 18).pivot_table( index='Sex')
+titanic_child = titanic_df.where(titanic_df['Age'] < 18).pivot_table( index='Sex',aggfunc='count')['Name']
+titanic_adult = titanic_df.where(titanic_df['Age'] >= 18).pivot_table( index='Sex',aggfunc='count')['Name']
 print(pd.concat([titanic_child,titanic_adult], keys=['child', 'adult']))

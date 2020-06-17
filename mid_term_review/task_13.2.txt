@@ -1,0 +1,7 @@
+a. An RDD is a Resilient Distributed Dataset. This is a read only collection of data that is divided into partitions that can be distributed amongst worker nodes.
+
+b. A DAG is a Directed Acyclic Graph where, in spark terms, the vertices are operations and the corners are RDDs. This keeps track of the operations to be applied to the data.
+
+c. The spark driver is the node which declares operations to be carried out and submits them to the master node for distribution amonst the workers.
+
+d. Spark is fault tolerant and achieves this by recalculating lost or corrupted data from rdds that still exist instead of calculting from scratch.  

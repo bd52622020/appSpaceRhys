@@ -1,0 +1,31 @@
+#enter hbase cli
+hbase shell
+
+#create characters table
+create 'characters', 'name', 'height', 'mass', 'hair_color', 'skin_color', 'eye_color', 'birth_year', 'gender', 'homeworld', 'species'
+
+#create planets table
+create 'planets', 'name', 'rotation_period', 'orbital_period', 'diameter', 'climate', 'gravity', 'terrain', 'surface_water', 'population'
+
+#create species table
+create 'species', 'name', 'classification', 'designation', 'average_height', 'skin_colors', 'hair_colors', 'eye_colors', 'average_lifespan', 'language,homeworld'
+
+#create starships table
+create 'starships', 'name', 'model', 'manufacturer', 'cost_in_credits', 'length', 'max_atmosphering_speed', 'crew', 'passengers', 'cargo_capacity', 'consumables', 'hyperdrive_rating', 'MGLT', 'starship_class'
+
+#create vehicles table
+create 'characters', 'name', 'model', 'manufacturer', 'cost_in_credits', 'length', 'max_atmosphering_speed', 'crew', 'passengers', 'cargo_capacity', 'consumables', 'vehicle_class'
+
+#exit cli
+ctrl-d
+
+#Import data
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="HBASE_ROW_KEY,height,mass,hair_color,skin_color,eye_color,birth_year,gender,homeworld,species" characters "hdfs:///user/maria_dev/data/star_wars/characters"
+
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="HBASE_ROW_KEY,rotation_period,orbital_period,diameter,climate,gravity,terrain,surface_water,population" planets "hdfs:///user/maria_dev/data/star_wars/planets"
+
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="HBASE_ROW_KEY,classification,designation,average_height,skin_colors,hair_colors,eye_colors,average_lifespan,language,homeworld" species "hdfs:///user/maria_dev/data/star_wars/species"
+
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="HBASE_ROW_KEY,model,manufacturer,cost_in_credits,length,max_atmosphering_speed,crew,passengers,cargo_capacity,consumables,hyperdrive_rating,MGLT,starship_class" starships "hdfs:///user/maria_dev/data/star_wars/starships"
+
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="HBASE_ROW_KEY,model,manufacturer,cost_in_credits,length,max_atmosphering_speed,crew,passengers,cargo_capacity,consumables,vehicle_class" vehicles "hdfs:///user/maria_dev/data/star_wars/vehicles"

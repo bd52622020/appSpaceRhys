@@ -1,0 +1,10 @@
+1. Local runs the spark script locally. Local[*] runs the scripts with as many threads as there are logical cores on the local machine.
+
+2. Map applies a function of every element in an iterable. Flatmap “flattens” the iterable first by making each item into a top level element. For example (“a”,(”b”,”c”)) is computed as if it were (“a”,”b”,”c”)
+
+3.  You can reference data in an external storage system or apply transformations on an existing RDD.
+
+4. map operates on every full item in the iterable. mapValues operates on only the values in a key-value pair.
+
+5. reduceByKey().
+

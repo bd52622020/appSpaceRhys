@@ -71,7 +71,7 @@ object movielens {
                                         .withColumn("release_date",
                                           when(to_date(col("release_date"),"dd-MMM-yyyy").isNotNull,
                                             to_date(col("release_date"),"dd-MMM-yyyy"))
-                                          .otherwise("Unknown Format").as("release_date"))
+                                          .otherwise("Invalid Format").as("release_date"))
                                         
     val userDF = sq.read.format("csv").option("delimiter", "|")
                                         .option("header",false)
@@ -145,7 +145,7 @@ object movielens {
             .show(truncate=false)
     
     // Q6.Print the title of the movie that was rated the most by students
-    println("\n\nQuestion 5:\n")              
+    println("\n\nQuestion 6:\n")              
     dataUserRDD.filter(col("occupation") === "student")
                 .groupBy("movie_id")
                 .count()

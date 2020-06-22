@@ -73,11 +73,6 @@ object movielens {
                                             to_date(col("release_date"),"dd-MMM-yyyy"))
                                           .otherwise("Unknown Format").as("release_date"))
                                         
-    val genreDF = sq.read.format("csv").option("delimiter", "|")
-                                        .option("header",false)
-                                        .option("encoding", "ISO-8859-1")
-                                        .load("./data/ml-100k/u.genre")
-                                        
     val userDF = sq.read.format("csv").option("delimiter", "|")
                                         .option("header",false)
                                         .option("encoding", "ISO-8859-1")
@@ -114,11 +109,12 @@ object movielens {
     
     // Q3.Print list of the number of ratings by genre
     println("\n\nQuestion 3:\n") 
-    dataItemRDD.drop("movie_id","movie_title","release_date","rating")
+    val dropList3 = Seq("movie_id","movie_title","release_date","rating")
+    dataItemRDD.drop(dropList3:_*)
                 .groupBy()
                 .sum()
                 .collect
-                .flatMap(row => Map(dataItemRDD.drop("movie_id","movie_title","release_date","rating")
+                .flatMap(row => Map(dataItemRDD.drop(dropList3:_*)
                     .columns
                     .zip(row.toSeq):_*))
                 .foreach(println)

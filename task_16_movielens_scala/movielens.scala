@@ -46,7 +46,7 @@ object movielens {
     val userSchema = StructType(Array(
                                     StructField("user_id", IntegerType, true),
                                     StructField("age", IntegerType, true),
-                                    StructField("gender", StringType, false),
+                                    StructField("gender", StringType, true),
                                     StructField("occupation", StringType, true),
                                     StructField("zip_code", StringType, true)))
     
@@ -110,12 +110,12 @@ object movielens {
     // Q3.Print list of the number of ratings by genre
     println("\n\nQuestion 3:\n") 
     val dropList3 = Seq("movie_id","movie_title","release_date","rating")
+    sc.broadcast(dropList3)
     dataItemRDD.drop(dropList3:_*)
                 .groupBy()
                 .sum()
                 .collect
-                .flatMap(row => Map(dataItemRDD.drop(dropList3:_*)
-                    .columns
+                .flatMap(row => Map(dataItemRDD.schema.names.toSeq.diff(dropList3)
                     .zip(row.toSeq):_*))
                 .foreach(println)
               
@@ -133,14 +133,15 @@ object movielens {
     println("\n\nQuestion 5:\n")  
     
     //create list of only genre column names
-    val filterList5 = itemDF.drop("movie_id","movie_title","release_date").columns
+    val filterSeq5 = itemDF.schema.names.diff(Seq("movie_id","movie_title","release_date"))
+    sc.broadcast(filterSeq5)
     
     //create UDF to produce genre list
     val genreString = udf((row: Row) => 
       row.getValuesMap[Int](row.schema.fieldNames).toList.filter(_._2 == 1).map(x => x._1))   
      
     itemDF.filter(col("movie_id").isin((top10RDD.map(row => row.getInt(0))):_*))
-            .withColumn("genres", genreString(struct(filterList5 map col: _*)))
+            .withColumn("genres", genreString(struct(filterSeq5 map col: _*)))
             .select("movie_title","genres")
             .show(truncate=false)
     

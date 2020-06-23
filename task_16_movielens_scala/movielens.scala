@@ -9,7 +9,7 @@ import org.apache.spark.sql.Row
 object movielens {
   
   def main(args:Array[String]){
-    //Initialize
+    //Initialise
     Logger.getLogger("org").setLevel(Level.ERROR)
     val sc = new SparkContext("local[*]","MovieLens") 
     val sq = new org.apache.spark.sql.SQLContext(sc)
@@ -109,13 +109,13 @@ object movielens {
     
     // Q3.Print list of the number of ratings by genre
     println("\n\nQuestion 3:\n") 
-    val dropList3 = Seq("movie_id","movie_title","release_date","rating")
-    sc.broadcast(dropList3)
-    dataItemRDD.drop(dropList3:_*)
+    val dropSeq3 = Seq("movie_id","movie_title","release_date","rating")
+    sc.broadcast(dropSeq3)
+    dataItemRDD.drop(dropSeq3:_*)
                 .groupBy()
                 .sum()
                 .collect
-                .flatMap(row => Map(dataItemRDD.schema.names.toSeq.diff(dropList3).zip(row.toSeq):_*))
+                .flatMap(row => Map(dataItemRDD.schema.names.toSeq.diff(dropSeq3).zip(row.toSeq):_*))
                 .foreach(println)
               
     // Q4.Print oldest movie with a 5 rating.
@@ -145,7 +145,6 @@ object movielens {
             .flatMap{ input => List((input(0) + ": " + input(1))) }
             .collect()            
             .foreach(println)
-            //.show(truncate=false)
     
     // Q6.Print the title of the movie that was rated the most by students
     println("\n\nQuestion 6:\n")              

@@ -115,8 +115,7 @@ object movielens {
                 .groupBy()
                 .sum()
                 .collect
-                .flatMap(row => Map(dataItemRDD.schema.names.toSeq.diff(dropList3)
-                    .zip(row.toSeq):_*))
+                .flatMap(row => Map(dataItemRDD.schema.names.toSeq.diff(dropList3).zip(row.toSeq):_*))
                 .foreach(println)
               
     // Q4.Print oldest movie with a 5 rating.
@@ -142,8 +141,11 @@ object movielens {
      
     itemDF.filter(col("movie_id").isin((top10RDD.map(row => row.getInt(0))):_*))
             .withColumn("genres", genreString(struct(filterSeq5 map col: _*)))
-            .select("movie_title","genres")
-            .show(truncate=false)
+            .select(col("movie_title"), concat_ws(", ",col("genres")))
+            .flatMap{ input => List((input(0) + ": " + input(1))) }
+            .collect()            
+            .foreach(println)
+            //.show(truncate=false)
     
     // Q6.Print the title of the movie that was rated the most by students
     println("\n\nQuestion 6:\n")              

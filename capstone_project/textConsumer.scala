@@ -16,8 +16,6 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
-import java.io._
-import org.apache.spark.sql.functions.current_timestamp
 import java.util.Calendar
 import java.text.SimpleDateFormat
 

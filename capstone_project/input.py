@@ -10,6 +10,13 @@ from time import time
 def on_send_success(record_metadata):
     ps_log = logging.getLogger("producer_success_logger")
     log_message = record_metadata.topic + " " + str(record_metadata.partition) + " " + str(record_metadata.offset)
+    # add_unique handler for each log
+    for hdlr in ps_log.handlers[:]:
+        if isinstance(hdlr,logging.FileHandler):
+            ps_log.removeHandler(hdlr)
+    handler = logging.FileHandler(f"./logs/kafka_success/kafka_producers/input_send_{str(time())}")        
+    handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S"))  
+    ps_log.addHandler(handler)
     ps_log.info(log_message)
 
 def on_send_error(e):
@@ -26,10 +33,24 @@ def create_logger(name, log_file, level=logging.INFO):
 
 #define loggers
 def logging_init(): 
-    #define loggers
     create_logger('general_error_logger', './logs/errors.log', level=logging.ERROR)
-    create_logger('producer_success_logger', './logs/kafka_success/kafka_producers_success.log', level=logging.INFO)
+    create_logger('producer_success_logger', f"./logs/kafka_success/kafka_producers/input_send_{str(time())}", level=logging.INFO)
     create_logger('producer_failure_logger', './logs/kafka_failure/kafka_producers_failure.log', level=logging.ERROR)
+ 
+#get mp3 stream from playlist   
+def streamGet(url1):
+    if url1.endswith('pls'):
+        #get stream url from pls file
+        plsMessage = str(requests.get(url1).text)
+        return re.findall("(?<=File1=).*",plsMessage)[0]
+    elif url1.endswith('m3u'):
+        #get stream url from m3u file
+        return str(requests.get(url1).text)
+    elif url1.endswith('mp3'):
+        return url1
+    else:
+        raise Exception(f"{url1} is either not pls/m3u or cannot be found,")
+    
 
 def main(args):
     logging_init()
@@ -44,15 +65,7 @@ def main(args):
         exit()
         
     try:
-        if url1.endswith('pls'):
-            #get stream url from pls file
-            plsMessage = str(requests.get(url1).text)
-            fileUrl = re.findall("(?<=File1=).*",plsMessage)[0]
-        elif url1.endswith('m3u'):
-            #get stream url from m3u file
-            fileUrl = str(requests.get(url1).text)
-        else:
-            raise Exception(f"{url1} is either not pls/m3u or cannot be found,")
+        fileUrl = streamGet(url1)
     except Exception as e:
         e_log.error(f"unsupported playlist format or invalid url,",exc_info=e)
         exit()

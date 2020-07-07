@@ -2,6 +2,7 @@ package radio
 
 import java.io.NotSerializableException
 import org.apache.kafka.clients.consumer.{KafkaConsumer, ConsumerRecord}
+import org.apache.spark.sql.{SparkSession,SaveMode}
 import org.apache.spark.{SparkContext,SparkConf}
 import org.apache.spark.streaming.{StreamingContext, Seconds, Minutes}
 import org.apache.spark.streaming.dstream.{InputDStream,DStream}
@@ -15,21 +16,23 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
-
+import java.io._
+import org.apache.spark.sql.functions.current_timestamp
+import java.util.Calendar
+import java.text.SimpleDateFormat
 
 object textConsumer {
   def main(args: Array[String]){
-    streamFromKafka(Array("transcripts"))
+    streamFromKafka("transcripts","./logs/kafka_success/kafka_consumers")
   }
-   def streamFromKafka(kafkaTopics:Array[String]) {
+   def streamFromKafka(kafkaTopics:String,SuccessLogs:String) {
      
-      //spark Configuration
+      //Initialise Spark Streaming
       val sparkConf = new SparkConf().setMaster("local[*]")
                                      .setAppName("textConsume")
                                      .set("spark.mongodb.output.uri", "mongodb://127.0.0.1:27017/radio.transcripts")
-      
-      //Initialise Spark
-      val ssc:StreamingContext = new StreamingContext(sparkConf, Minutes(1))                               
+                                     
+      val ssc:StreamingContext = new StreamingContext(sparkConf, Seconds(3))                               
       ssc.sparkContext.setLogLevel("ERROR")
       
       //Kafka Consumer Configuration
@@ -39,7 +42,7 @@ object textConsumer {
           "key.deserializer" -> classOf[StringDeserializer],
           "value.deserializer" -> classOf[StringDeserializer],
           "group.id" -> "SparkConsumer",
-          "auto.offset.reset" -> "latest",
+          "auto.offset.reset" -> "earliest",
           "enable.auto.commit" -> (true: java.lang.Boolean)
       )
       
@@ -48,12 +51,26 @@ object textConsumer {
         createDirectStream[String, String](
             ssc,
             LocationStrategies.PreferConsistent,
-            ConsumerStrategies.Subscribe[String, String](kafkaTopics, kafkaConfig)
-        )
+            ConsumerStrategies.Subscribe[String, String](Array(kafkaTopics), kafkaConfig))
+            
+       val dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")      
+            
       try{
-        //
+        
+        //class for json extraction
         case class kMessage(timestamp: Int, transcript: String)
+        //mongo writer configuration
         val mongoConfig = WriteConfig(Map("spark.mongodb.output.uri" -> "mongodb://127.0.0.1:27017/radio.transcipts"), Some(WriteConfig(ssc.sparkContext)))
+        //write received message info to log file
+        kafkaRawStream.map(record => {val now = dateTimeFormat.format(Calendar.getInstance().getTime());
+                                      (s"${record.topic} ${record.partition} ${record.offset},${now},INFO")})
+                      .foreachRDD(rdd =>{ 
+                          if (rdd.take(1).length == 1){
+                            val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
+                            import spark.implicits._      
+                            rdd.toDF.coalesce(1).write.format("text").mode(SaveMode.Append).save(SuccessLogs)}})
+                          
+        //compute records and insert into mongo
         val textStream = kafkaRawStream.map(record => (record.key:String,jsonParse(record.value)))
                                         .groupByKeyAndWindow(Minutes(1)) //collate windows of messages 
                                         .map(row=>( 

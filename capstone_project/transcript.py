@@ -55,16 +55,17 @@ def logging_init():
     create_logger('consumer_success_logger', f"./logs/kafka_success/kafka_consumers/transcript_receive_{str(time())}", level=logging.INFO)
     create_logger('consumer_failure_logger', './logs/kafka_failure/kafka_consumers_failure.log', level=logging.ERROR)
     
-def mp3Formatter(section):
+def mp3Convert(section):
     bytes_io_mp3 = io.BytesIO(section)
     bytes_io_wav = io.BytesIO()
     sound = AudioSegment.from_mp3(bytes_io_mp3)
     sound.set_channels(1)
     sound.export(bytes_io_wav, codec="pcm_s16le", format='wav')
-    return sr.AudioFile(bytes_io_wav)
+    return bytes_io_wav
 
-def transcription(formatter, start):
+def transcription(wav_bytes, start):
     r = sr.Recognizer()
+    formatter = sr.AudioFile(wav_bytes)
     with formatter as source:
         r.adjust_for_ambient_noise(source)
         audio = r.record(source)        
@@ -72,6 +73,7 @@ def transcription(formatter, start):
     data = {}
     data["timestamp"] = str(start)
     data["transcript"] = recog_text
+    return data
     
 def getKey(key_text):
     return key_text.encode('utf8')
@@ -129,13 +131,13 @@ def main():
             first = True            
             
             try:
-                formatter = mp3Formatter(test_section)    
+                wav_bytes = mp3Convert(test_section)   
             except Exception as e:
                 cf_log.error(f"{message.topic} {message.partition} {message.offset},Audio Format Conversion Failed",exc_info=e)
                 continue
             
             try:
-                data = transcription(formatter, start)                    
+                data = transcription(wav_bytes, start)                    
             except Exception as e:
                 cf_log.error(f"{message.topic} {message.partition} {message.offset},Speech Transcription Failed",exc_info=e)
                 continue

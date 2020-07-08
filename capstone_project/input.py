@@ -38,7 +38,7 @@ def logging_init():
     create_logger('producer_failure_logger', './logs/kafka_failure/kafka_producers_failure.log', level=logging.ERROR)
  
 #get mp3 stream from playlist   
-def streamGet(url1):
+def stream_get(url1):
     if url1.endswith('pls'):
         #get stream url from pls file
         plsMessage = str(requests.get(url1).text)
@@ -50,7 +50,14 @@ def streamGet(url1):
         return url1
     else:
         raise Exception(f"{url1} is either not pls/m3u or cannot be found,")
-    
+
+def input_produce(stream,producer,topic):  
+    while True:
+        #read 1 kB file chunks
+        message = stream.read(1024)
+        t = str(int(round(time() * 1000)))
+        #publish to kafka
+        producer.send(topic, key=t.encode("utf_8"), value=message).add_callback(on_send_success).add_errback(on_send_error)      
 
 def main(args):
     logging_init()
@@ -65,7 +72,7 @@ def main(args):
         exit()
         
     try:
-        fileUrl = streamGet(url1)
+        fileUrl = stream_get(url1)
     except Exception as e:
         e_log.error(f"unsupported playlist format or invalid url,",exc_info=e)
         exit()
@@ -84,12 +91,7 @@ def main(args):
         e_log.error(f"{args[1]} radioProducer script Failed to connect to stream at {fileUrl},",exc_info=e) 
         exit()
         
-    while True:
-        #read 1 kB file chunks
-        message = stream.read(1024)
-        t = str(int(round(time() * 1000)))
-        #publish to kafka
-        producer.send(topic_produce, key=t.encode("utf_8"), value=message).add_callback(on_send_success).add_errback(on_send_error)
+    input_produce(stream,producer,topic_produce)
 
         
 if __name__ == "__main__":   

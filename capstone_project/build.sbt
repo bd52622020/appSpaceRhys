@@ -10,7 +10,10 @@ libraryDependencies ++= Seq(
   	 "org.apache.spark" %% "spark-streaming" % sparkVersion,
   	 "org.apache.spark" %% "spark-sql" % sparkVersion,	 
   	 "org.mongodb.spark" %% "mongo-spark-connector" % "2.4.2",
-  	 "org.json4s" %% "json4s-native" % "3.6.9"
+  	 "org.json4s" %% "json4s-native" % "3.6.9",
+  	 "net.manub" %% "scalatest-embedded-kafka" % "0.14.0" % "test",
+  	 "org.scalatest" %% "scalatest" % "3.2.0" % "test",
+  	 "org.scalactic" %% "scalactic" % "3.2.0"
 )
 
 

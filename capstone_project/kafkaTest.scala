@@ -34,7 +34,7 @@ object kafkaTest {
                                     .csv(SuccessLogs)
                                     .filter(col("timestamp") <= (current_timestamp() - expr("INTERVAL 30 SECONDS")))                                    
                                     .withWatermark("timestamp", "30 seconds") //how long to wait before dropping late data
-                                    .groupBy(window(col("timestamp"),"120 seconds","40 seconds"),col("message"))
+                                    .groupBy(window(col("timestamp"),"24 hours"),col("message"))
                                     .agg(count(col("message")).as("count"))
                                     .filter(col("count") === 1)
                                     .writeStream

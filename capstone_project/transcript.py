@@ -84,7 +84,7 @@ def get_value(data):
 def produce_transcript(producer, topic, encoded_key, encoded_value):
     producer.send(topic, key=encoded_key, value=encoded_value).add_callback(on_send_success).add_errback(on_send_error)
     
-def consume_transcript(consumer, producer, topic, key):
+def consume_transcript(consumer):
     cf_log = logging.getLogger("consumer_failure_logger")
     e_log = logging.getLogger("general_error_logger")
     #Initialise loop
@@ -115,21 +115,21 @@ def consume_transcript(consumer, producer, topic, key):
                 wav_bytes = mp3_convert(test_section)   
             except Exception as e:
                 e_log.error(f"{message.topic} {message.partition} {message.offset},Audio Format Conversion Failed",exc_info=e)
-                continue
+                return 0
             
             try:
                 data = transcription(wav_bytes, start)                    
             except Exception as e:
                 e_log.error(f"{message.topic} {message.partition} {message.offset},Speech Transcription Failed",exc_info=e)
-                continue
+                return 0
                   
             try:
-                encoded_value = get_value(data)
-                encoded_key = get_key(key)            
+                encoded_value = get_value(data)           
             except Exception as e:
                 e_log.error(f"{message.topic} {message.partition} {message.offset},Text Encoding Failed",exc_info=e)
-                continue
-            produce_transcript(producer, topic, encoded_key, encoded_value)
+                return 0
+            
+            return(encoded_value)
     
 def main():
     logging_init()
@@ -155,8 +155,14 @@ def main():
     except Exception as e:
         e_log.error("Failed to initialise radioConsumer script",exc_info=e)
         exit()
-    
-    consume_transcript(consumer, producer, topic_produce, produce_key)
+        
+    encoded_key = get_key(produce_key)
+    while True:
+        message = consume_transcript(consumer)
+        print(message)
+        if message != 0:
+            print("loop")
+            produce_transcript(producer, topic_produce, encoded_key, message)
                
         
 if __name__ == "__main__":   

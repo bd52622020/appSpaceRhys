@@ -5,7 +5,7 @@ import requests
 import re
 from urllib.request import urlopen
 from sys import argv, exit
-from time import time
+from time import time, sleep
 
 def on_send_success(record_metadata):
     ps_log = logging.getLogger("producer_success_logger")
@@ -55,9 +55,13 @@ def input_produce(stream,producer,topic):
     while True:
         #read 1 kB file chunks
         message = stream.read(1024)
-        t = str(int(round(time() * 1000)))
-        #publish to kafka
-        producer.send(topic, key=t.encode("utf_8"), value=message).add_callback(on_send_success).add_errback(on_send_error)      
+        if(message != b''):
+            t = str(int(round(time() * 1000)))
+            #publish to kafka
+            producer.send(topic, key=t.encode("utf_8"), value=message).add_callback(on_send_success).add_errback(on_send_error)
+        else:
+            return 0
+        
 
 def main(args):
     logging_init()
@@ -90,8 +94,10 @@ def main(args):
     except Exception as e:
         e_log.error(f"{args[1]} radioProducer script Failed to connect to stream at {fileUrl},",exc_info=e) 
         exit()
-        
-    input_produce(stream,producer,topic_produce)
+    
+    while True: #If something has gone wrong it is this  
+        input_produce(stream,producer,topic_produce)
+        sleep(0.1)
 
         
 if __name__ == "__main__":   

@@ -26,7 +26,7 @@ object textConsumer {
   
   def main(args: Array[String]){
     streamFromKafka(Array("transcripts",
-        "./logs/kafka_success/kafka_consumers",
+        "/home/data/project/logs/kafka_success/kafka_consumers",
         "local[*]",
         "textConsume",
         "mongodb://127.0.0.1:27017/radio.transcripts",

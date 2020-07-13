@@ -49,14 +49,11 @@ object textConsumer {
       //Initialise Kafka Stream
       val kafkaRawStream:InputDStream[ConsumerRecord[String, String]] = kafkaStreamInit(ssc,args(0),kafkaConfig)
       
-      //date formatter      
-      val dateTimeFormat:SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss") 
-      
       //mongo writer configuration
       val mongoConfig:WriteConfig = getMongoConfig(ssc,args(4))
             
       try{
-        messageReceiptLog(kafkaRawStream,dateTimeFormat,args(1))                                   
+        messageReceiptLog(kafkaRawStream,args(1))                                   
       }
       catch {
         case e:Exception=> println(e)
@@ -105,7 +102,9 @@ object textConsumer {
     }
     
     //Log message receipt
-    def messageReceiptLog(kafkaRawStream:InputDStream[ConsumerRecord[String, String]], dateTimeFormat:SimpleDateFormat,SuccessLogs:String):Unit ={
+    def messageReceiptLog(kafkaRawStream:InputDStream[ConsumerRecord[String, String]],SuccessLogs:String):Unit ={
+      //date formatter      
+      val dateTimeFormat:SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss") 
       kafkaRawStream.map(record => {val now = dateTimeFormat.format(Calendar.getInstance().getTime());
                                     (s"${record.topic} ${record.partition} ${record.offset},${now},INFO")})
                     .foreachRDD(rdd =>{ 

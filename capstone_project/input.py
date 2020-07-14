@@ -7,6 +7,8 @@ from urllib.request import urlopen
 from sys import argv, exit
 from time import time, sleep
 
+
+#Log messages successfully published to kafka
 def on_send_success(record_metadata):
     ps_log = logging.getLogger("producer_success_logger")
     log_message = record_metadata.topic + " " + str(record_metadata.partition) + " " + str(record_metadata.offset)
@@ -18,11 +20,14 @@ def on_send_success(record_metadata):
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S"))  
     ps_log.addHandler(handler)
     ps_log.info(log_message)
+    handler.close()
 
+#Log kafka publishing errors
 def on_send_error(e):
     pf_log = logging.getLogger("producer_failure_logger")
     pf_log.error(exc_info=e)
 
+#Create logger with supplied arguments
 def create_logger(name, log_file, level=logging.INFO):
     handler = logging.FileHandler(log_file)        
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S"))
@@ -51,6 +56,7 @@ def stream_get(url1):
     else:
         raise Exception(f"{url1} is either not pls/m3u or cannot be found,")
 
+#Publish 1kb binary chunks to kafka as messages
 def input_produce(stream,producer,topic):  
     while True:
         #read 1 kB file chunks
@@ -95,9 +101,10 @@ def main(args):
         e_log.error(f"{args[1]} radioProducer script Failed to connect to stream at {fileUrl},",exc_info=e) 
         exit()
     
-    while True: #If something has gone wrong it is this  
+    #Produce messages from stream indefinitely with a slight delay if no data available 
+    while True:
         input_produce(stream,producer,topic_produce)
-        sleep(0.1)
+        sleep(0.5)
 
         
 if __name__ == "__main__":   

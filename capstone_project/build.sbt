@@ -11,9 +11,10 @@ libraryDependencies ++= Seq(
   	 "org.apache.spark" %% "spark-sql" % sparkVersion,	 
   	 "org.mongodb.spark" %% "mongo-spark-connector" % "2.4.2",
   	 "org.json4s" %% "json4s-native" % "3.6.9",
-  	 "net.manub" %% "scalatest-embedded-kafka" % "0.14.0" % "test",
+  	 "net.manub" %% "scalatest-embedded-kafka" % "0.16.0" % "test",
   	 "org.scalatest" %% "scalatest" % "3.2.0" % "test",
-  	 "org.scalactic" %% "scalactic" % "3.2.0"
+  	 "org.scalactic" %% "scalactic" % "3.2.0",
+  	 "org.apache.kafka" %% "kafka" % "2.5.0"
 )
 
 
@@ -31,6 +32,7 @@ assemblyMergeStrategy in assembly := {
     case PathList("com", "fasterxml", xs @ _*) => MergeStrategy.last
     case PathList("org", "aopalliance", xs @ _*) => MergeStrategy.last
     case PathList("javax", "inject", xs @ _*) => MergeStrategy.last
+    case PathList("io", "netty", xs @ _*) => MergeStrategy.last
     case "git.properties" => MergeStrategy.rename
     case "module-info.class" => MergeStrategy.rename
     case "about.html" => MergeStrategy.rename

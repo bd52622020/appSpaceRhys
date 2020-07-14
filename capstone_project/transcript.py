@@ -10,7 +10,7 @@ import json
 from time import time
 
 
-
+#Log messages successfully published to kafka
 def on_send_success(record_metadata):
     ps_log = logging.getLogger("producer_success_logger")
     log_message = record_metadata.topic + " " + str(record_metadata.partition) + " " + str(record_metadata.offset)
@@ -22,7 +22,9 @@ def on_send_success(record_metadata):
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S"))  
     ps_log.addHandler(handler)
     ps_log.info(log_message)
-    
+    handler.close()
+
+#Log messages successfully received from kafka    
 def on_receive_success(message):
     cs_log = logging.getLogger("consumer_success_logger")  
     # add_unique handler for each log
@@ -32,12 +34,15 @@ def on_receive_success(message):
     handler = logging.FileHandler(f"./logs/kafka_success/kafka_consumers/transcript_receive_" + str(message.timestamp))        
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S")) 
     cs_log.addHandler(handler) 
-    cs_log.info(f"{message.topic} {message.partition} {message.offset}")   
+    cs_log.info(f"{message.topic} {message.partition} {message.offset}")
+    handler.close()   
 
+#Log kafka publishing errors
 def on_send_error(e):
     pf_log = logging.getLogger("producer_failure_logger")
     pf_log.error(exc_info=e)
 
+#Create logger with supplied arguments
 def create_logger(name, log_file, level=logging.INFO):
     handler = logging.FileHandler(log_file)        
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S"))
@@ -54,7 +59,8 @@ def logging_init():
     create_logger('producer_failure_logger', './logs/kafka_failure/kafka_producers_failure.log', level=logging.ERROR)
     create_logger('consumer_success_logger', f"./logs/kafka_success/kafka_consumers/transcript_receive_{str(time())}", level=logging.INFO)
     create_logger('consumer_failure_logger', './logs/kafka_failure/kafka_consumers_failure.log', level=logging.ERROR)
-    
+
+#Convert mp3 section to wav    
 def mp3_convert(section):
     bytes_io_mp3 = io.BytesIO(section)
     bytes_io_wav = io.BytesIO()
@@ -63,6 +69,7 @@ def mp3_convert(section):
     sound.export(bytes_io_wav, codec="pcm_s16le", format='wav')
     return bytes_io_wav
 
+#transcribe recognizable speech in audio
 def transcription(wav_bytes, start):
     r = sr.Recognizer()
     formatter = sr.AudioFile(wav_bytes)
@@ -74,16 +81,20 @@ def transcription(wav_bytes, start):
     data["timestamp"] = str(start)
     data["transcript"] = recog_text
     return data
-    
+
+#encode key for kafka message  
 def get_key(key_text):
     return key_text.encode('utf8')
-    
+
+#encode value for kafka message 
 def get_value(data):
     return json.dumps(data,separators=(',', ':')).encode('utf-8')
 
+#send formatted transcript to kafka
 def produce_transcript(producer, topic, encoded_key, encoded_value):
     producer.send(topic, key=encoded_key, value=encoded_value).add_callback(on_send_success).add_errback(on_send_error)
-    
+
+#consume radio stream from kafka   
 def consume_transcript(consumer):
     cf_log = logging.getLogger("consumer_failure_logger")
     e_log = logging.getLogger("general_error_logger")
@@ -135,7 +146,8 @@ def main():
     logging_init()
     
     e_log = logging.getLogger("general_error_logger")
-
+    
+    #setup kafka topic and key from script arguments
     try:
         topic_consume = argv[1] + '_mp3'
         produce_key = argv[1]
@@ -157,6 +169,8 @@ def main():
         exit()
         
     encoded_key = get_key(produce_key)
+    
+    #consume messages, convert audio, transcript audio, then publish transcripts to kafka. Repeat Indefinitely.
     while True:
         message = consume_transcript(consumer)
         print(message)

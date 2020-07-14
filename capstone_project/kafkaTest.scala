@@ -52,7 +52,8 @@ object kafkaTest {
            .show(truncate=false) 
     
     }
-                                                                  
+    //cleanup                                                              
     logs.awaitTermination()
+    logs.stop()
   }
 }

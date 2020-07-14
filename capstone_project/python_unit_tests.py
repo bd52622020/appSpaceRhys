@@ -10,12 +10,14 @@ import io
 import json
 
 class TestRadioMethods(unittest.TestCase):
-
+    
+    #Test that mp3 to wav conversion is working
     def test_conversion(self):
         conversion_bytes = open("./test_files/superman-radioshow-1940.mp3", "rb")
         self.assertEqual(magic.from_buffer(mp3_convert(conversion_bytes.read()).read()), 'RIFF (little-endian) data, WAVE audio, Microsoft PCM, 16 bit, mono 22050 Hz')
         conversion_bytes.close()
-
+    
+    #Test that transcription is working
     def test_transcription(self):
         new_time = time
         transcription_file = open("./test_files/OSR_us_000_0011_8k.wav", "rb")
@@ -29,15 +31,19 @@ class TestRadioMethods(unittest.TestCase):
         self.assertTrue(test_transcript['timestamp'] == str(new_time))
         transcription_file.close()
 
+    #Test that key formatting is working
     def test_key(self):
         self.assertEqual(get_key("string"), b'string') 
-                         
+    
+    # Test that value formatting is working                    
     def test_value(self):
         self.assertEqual(get_value("foo bar a b 3"), b'"foo bar a b 3"')
-        
+    
+    #Test that stream parser is working    
     def test_stream_get(self):  
         self.assertEqual(stream_get('http://www.test.com/test.mp3'),'http://www.test.com/test.mp3') 
-        
+    
+    #Test that transcript.py produces expected records to kafka   
     def test_produce_transcript(self):
         topic = "tranp_test_" + str(int(time()))
         producer = KafkaProducer(bootstrap_servers=['data-VirtualBox:9092'])
@@ -52,7 +58,8 @@ class TestRadioMethods(unittest.TestCase):
             self.assertEqual(message.key,b"foo")
             self.assertEqual(message.value,b"bar")
             break
-        
+    
+    #Test that transcript.py consumes records from kafka as expected   
     def test_transcript_consume(self):
         topic = "tranc_test_" + str(int(time()))
         t = int(round(time() * 1000))
@@ -76,7 +83,7 @@ class TestRadioMethods(unittest.TestCase):
         for word in words:
             self.assertTrue(isinstance(word, str))
           
-    
+    #Test that input.py produces expected records to kafka 
     def test_input_produce(self):
         producer = KafkaProducer(bootstrap_servers=['data-VirtualBox:9092'])
         base_message = b''

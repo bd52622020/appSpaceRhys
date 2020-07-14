@@ -51,13 +51,16 @@ object textConsumer {
       
       //mongo writer configuration
       val mongoConfig:WriteConfig = getMongoConfig(ssc,args(4))
-            
+      
+      //Start message logging     
       try{
         messageReceiptLog(kafkaRawStream,args(1))                                   
       }
       catch {
         case e:Exception=> println(e)
-      }      
+      }
+      
+      //Start spark-kafka computation     
       try{
         val cStream:DStream[Document] = computeStream(kafkaRawStream) 
         publishToMongo(cStream,mongoConfig)                                   
@@ -96,7 +99,7 @@ object textConsumer {
                                   "'tokenized_text':" + Serialization.write(row._4).toString() + "}"})
                     .map(row=> Document.parse(row)) //convert json string to bson
     }
-    
+    //Insert documents into mongo collection
     def publishToMongo(kafkaStream:DStream[Document],mongoConfig:WriteConfig):Unit = {
       kafkaStream.foreachRDD(rdd=>MongoSpark.save(rdd,mongoConfig)) //export to mongo 
     }
@@ -130,14 +133,14 @@ object textConsumer {
                 "auto.offset.reset" -> reset,
                 "enable.auto.commit" -> (true: java.lang.Boolean))     
     }
-    
+    //initialise spark-kafka streaming
     def kafkaStreamInit(ssc:StreamingContext,topic:String,kafkaConfig:Map[String, Object]):InputDStream[ConsumerRecord[String, String]] = {
        createDirectStream[String, String](
           ssc,
           LocationStrategies.PreferConsistent,
           ConsumerStrategies.Subscribe[String, String](Array(topic), kafkaConfig))     
     }
-    
+    //construct a mongo write configuration object
     def getMongoConfig(ssc:StreamingContext,mongoURI:String):WriteConfig = {
       WriteConfig(Map("spark.mongodb.output.uri" -> mongoURI), Some(WriteConfig(ssc.sparkContext)))
     }

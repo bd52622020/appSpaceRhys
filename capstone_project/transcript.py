@@ -151,12 +151,12 @@ def main():
     try:
         topic_consume = argv[1] + '_mp3'
         produce_key = argv[1]
+        topic_produce = argv[2]        
     except Exception as e:
         e_log.error("Not enough arguments provided to radioConsumer script,",exc_info=e)
         exit()
         
     try:
-        topic_produce = 'transcripts'
         #initialise kafka producer
         producer = KafkaProducer(bootstrap_servers=['data-VirtualBox:9092'])
         consumer = KafkaConsumer(topic_consume,
@@ -173,9 +173,7 @@ def main():
     #consume messages, convert audio, transcript audio, then publish transcripts to kafka. Repeat Indefinitely.
     while True:
         message = consume_transcript(consumer)
-        print(message)
         if message != 0:
-            print("loop")
             produce_transcript(producer, topic_produce, encoded_key, message)
                
         

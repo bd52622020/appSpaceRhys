@@ -14,9 +14,11 @@ libraryDependencies ++= Seq(
   	 "net.manub" %% "scalatest-embedded-kafka" % "0.16.0" % "test",
   	 "org.scalatest" %% "scalatest" % "3.2.0" % "test",
   	 "org.scalactic" %% "scalactic" % "3.2.0",
-  	 "org.apache.kafka" %% "kafka" % "2.5.0"
+  	 "org.apache.kafka" %% "kafka" % "2.5.0",
+  	 "org.mongodb.scala" %% "mongo-scala-driver" % "2.9.0"
 )
 
+parallelExecution in Test := false
 
 assemblyJarName in assembly := "transcriptProcessor.jar"
 

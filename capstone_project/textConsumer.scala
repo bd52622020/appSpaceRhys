@@ -20,9 +20,6 @@ import java.util.Calendar
 import java.text.SimpleDateFormat
 
 object textConsumer {
- 
-  //class for json extraction
-  case class kMessage(timestamp: Int, transcript: String)  
   
   def main(args: Array[String]){
     streamFromKafka(Array("transcripts",

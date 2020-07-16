@@ -18,6 +18,15 @@ import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
 import java.util.Calendar
 import java.text.SimpleDateFormat
+import edu.stanford.nlp.ling.CoreAnnotations
+import edu.stanford.nlp.pipeline.Annotation
+import edu.stanford.nlp.pipeline.StanfordCoreNLP
+import edu.stanford.nlp.neural.rnn.RNNCoreAnnotations
+import edu.stanford.nlp.sentiment.SentimentCoreAnnotations
+import edu.stanford.nlp.trees.Tree
+import edu.stanford.nlp.util.CoreMap
+import java.util.Properties
+import scala.collection.JavaConversions._
 
 object textConsumer {
   
@@ -93,7 +102,8 @@ object textConsumer {
                                   "{'station':'"+ row._1 + "'," +
                                   "'timestamps':" + Serialization.write(row._2).toString() + "," +
                                   "'raw_text':'" + row._3 + "'," +
-                                  "'tokenized_text':" + Serialization.write(row._4).toString() + "}"})
+                                  "'tokenized_text':" + Serialization.write(row._4).toString() + "," +
+                                  "'sentiment':'" + findSentiment(row._3) + "'}"})
                     .map(row=> Document.parse(row)) //convert json string to bson
     }
     //Insert documents into mongo collection
@@ -140,5 +150,31 @@ object textConsumer {
     //construct a mongo write configuration object
     def getMongoConfig(ssc:StreamingContext,mongoURI:String):WriteConfig = {
       WriteConfig(Map("spark.mongodb.output.uri" -> mongoURI), Some(WriteConfig(ssc.sparkContext)))
+    }
+    
+    def findSentiment(text:String):String = {
+        val props = new Properties
+        props.setProperty("annotators", "tokenize, ssplit, parse, sentiment")
+        val pipeline:StanfordCoreNLP = new StanfordCoreNLP(props)
+        var totalSentiment:Float = 0
+        var totalSentences:Float = 0
+        if (text.length() > 0) {
+            val annotation:Annotation = pipeline.process(text);
+            val sentences:java.util.List[CoreMap] =  annotation.get(classOf[CoreAnnotations.SentencesAnnotation])
+            sentences.map(sentence=>{
+                totalSentences += 1
+                val tree:Tree = sentence.get(classOf[SentimentCoreAnnotations.SentimentAnnotatedTree])
+                val slength = sentence.toString()
+                totalSentiment += RNNCoreAnnotations.getPredictedClass(tree)
+            })
+        }
+        val averageSentiment:Int = Math.round(totalSentiment/totalSentences)
+        totalSentiment match{
+          case 0 => "very_negative"
+          case 1 => "negative"
+          case 2 => "neutral"
+          case 3 => "positive"
+          case 4 => "very_positive"
+        }
     }
 }

@@ -92,7 +92,7 @@ object textConsumer {
     //compute records and insert into mongo
     def computeStream(kafkaRawStream:InputDStream[ConsumerRecord[String, String]]):DStream[Document] ={
       kafkaRawStream.map(record => (record.key:String,jsonParse(record.value)))
-                    .groupByKeyAndWindow(Minutes(1)) //collate windows of messages 
+                    .groupByKey
                     .map(row=>( 
                         row._1, //radio station
                         row._2.map(x=>x._1.toLong), //timestamps
@@ -152,29 +152,23 @@ object textConsumer {
       WriteConfig(Map("spark.mongodb.output.uri" -> mongoURI), Some(WriteConfig(ssc.sparkContext)))
     }
     
-    def findSentiment(text:String):String = {
+    def findSentiment(text:String):Int = {
         val props = new Properties
         props.setProperty("annotators", "tokenize, ssplit, parse, sentiment")
         val pipeline:StanfordCoreNLP = new StanfordCoreNLP(props)
         var totalSentiment:Float = 0
         var totalSentences:Float = 0
-        if (text.length() > 0) {
+        println(text)
+        if (text != null && text.length() > 0) {
             val annotation:Annotation = pipeline.process(text);
             val sentences:java.util.List[CoreMap] =  annotation.get(classOf[CoreAnnotations.SentencesAnnotation])
             sentences.map(sentence=>{
                 totalSentences += 1
                 val tree:Tree = sentence.get(classOf[SentimentCoreAnnotations.SentimentAnnotatedTree])
                 val slength = sentence.toString()
-                totalSentiment += RNNCoreAnnotations.getPredictedClass(tree)
+                totalSentiment = RNNCoreAnnotations.getPredictedClass(tree)
             })
         }
-        val averageSentiment:Int = Math.round(totalSentiment/totalSentences)
-        totalSentiment match{
-          case 0 => "very_negative"
-          case 1 => "negative"
-          case 2 => "neutral"
-          case 3 => "positive"
-          case 4 => "very_positive"
-        }
+        Math.round(totalSentiment/totalSentences)
     }
 }

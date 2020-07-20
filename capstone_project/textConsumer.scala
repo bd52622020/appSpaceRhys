@@ -27,6 +27,7 @@ import edu.stanford.nlp.trees.Tree
 import edu.stanford.nlp.util.CoreMap
 import java.util.Properties
 import scala.collection.JavaConversions._
+import edu.stanford.nlp.util.logging._
 
 object textConsumer {
   
@@ -153,9 +154,10 @@ object textConsumer {
     }
     
     def findSentiment(text:String):Int = {
-        val props = new Properties
-        props.setProperty("annotators", "tokenize, ssplit, parse, sentiment")
-        val pipeline:StanfordCoreNLP = new StanfordCoreNLP(props)
+        RedwoodConfiguration.empty().capture(System.out).apply()
+        val pipeProps = new Properties
+        pipeProps.setProperty("annotators", "tokenize, ssplit, parse, sentiment")
+        val pipeline:StanfordCoreNLP = new StanfordCoreNLP(pipeProps)
         var totalSentiment:Float = 0
         var totalSentences:Float = 0
         if (text != null && text.length() > 0) {

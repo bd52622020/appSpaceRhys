@@ -158,7 +158,6 @@ object textConsumer {
         val pipeline:StanfordCoreNLP = new StanfordCoreNLP(props)
         var totalSentiment:Float = 0
         var totalSentences:Float = 0
-        println(text)
         if (text != null && text.length() > 0) {
             val annotation:Annotation = pipeline.process(text);
             val sentences:java.util.List[CoreMap] =  annotation.get(classOf[CoreAnnotations.SentencesAnnotation])

@@ -50,7 +50,7 @@ object kafkaTest {
            .filter(col("count") === 3)
            .drop("count")
       unpaired.show(truncate=false)
-      println(f"Total unpaired messages: ${unpaired.count()}")
+      println(f"Total unpaired messages: ${unpaired.count()}\n\n")
     }
     //cleanup                                                              
     logs.awaitTermination()

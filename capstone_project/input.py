@@ -9,14 +9,14 @@ from time import time, sleep
 
 
 #Log messages successfully published to kafka
-def on_send_success(record_metadata):
+def on_send_success(record_metadata, log_dir):
     ps_log = logging.getLogger("producer_success_logger")
     log_message = record_metadata.topic + " " + str(record_metadata.partition) + " " + str(record_metadata.offset)
     # add_unique handler for each log
     for hdlr in ps_log.handlers[:]:
         if isinstance(hdlr,logging.FileHandler):
             ps_log.removeHandler(hdlr)
-    handler = logging.FileHandler(f"./logs/kafka_success/kafka_producers/input_send_{str(time())}")        
+    handler = logging.FileHandler(f"{log_dir}/kafka_success/kafka_producers/input_send_{str(time())}")        
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S"))  
     ps_log.addHandler(handler)
     ps_log.info(log_message)
@@ -37,10 +37,10 @@ def create_logger(name, log_file, level=logging.INFO):
     return logger
 
 #define loggers
-def logging_init(): 
-    create_logger('general_error_logger', './logs/errors.log', level=logging.ERROR)
-    create_logger('producer_success_logger', f"./logs/kafka_success/kafka_producers/input_send_{str(time())}", level=logging.INFO)
-    create_logger('producer_failure_logger', './logs/kafka_failure/kafka_producers_failure.log', level=logging.ERROR)
+def logging_init(log_dir): 
+    create_logger('general_error_logger', f"{log_dir}/errors.log", level=logging.ERROR)
+    create_logger('producer_success_logger', f"{log_dir}/kafka_success/kafka_producers/input_send_{str(time())}", level=logging.INFO)
+    create_logger('producer_failure_logger', f"{log_dir}/kafka_failure/kafka_producers_failure.log", level=logging.ERROR)
  
 #get mp3 stream from playlist   
 def stream_get(url1):
@@ -57,29 +57,25 @@ def stream_get(url1):
         raise Exception(f"{url1} is either not pls/m3u or cannot be found,")
 
 #Publish 1kb binary chunks to kafka as messages
-def input_produce(stream,producer,topic):  
+def input_produce(stream,producer,topic, log_dir):  
     while True:
         #read 1 kB file chunks
         message = stream.read(1024)
         if(message != b''):
             t = str(int(round(time() * 1000)))
             #publish to kafka
-            producer.send(topic, key=t.encode("utf_8"), value=message).add_callback(on_send_success).add_errback(on_send_error)
+            producer.send(topic, key=t.encode("utf_8"), value=message).add_callback(on_send_success, log_dir).add_errback(on_send_error)
         else:
             return 0
         
 
 def main(args):
-    logging_init()
     
+    log_dir = args[3]   
+    logging_init(log_dir) 
     e_log = logging.getLogger("general_error_logger")
-    
-    try:   
-        url1 = args[2]
-        topic_produce = args[1] + '_mp3'
-    except Exception as e:
-        e_log.error("Not enough arguments provided to radioProducer script,",exc_info=e)
-        exit()
+    url1 = args[2]
+    topic_produce = args[1] + '_mp3'
         
     try:
         fileUrl = stream_get(url1)
@@ -103,7 +99,7 @@ def main(args):
     
     #Produce messages from stream indefinitely with a slight delay if no data available 
     while True:
-        input_produce(stream,producer,topic_produce)
+        input_produce(stream,producer,topic_produce,log_dir)
         sleep(0.5)
 
         

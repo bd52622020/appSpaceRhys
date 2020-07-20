@@ -47,7 +47,7 @@ class TestRadioMethods(unittest.TestCase):
     def test_produce_transcript(self):
         topic = "tranp_test_" + str(int(time()))
         producer = KafkaProducer(bootstrap_servers=['data-VirtualBox:9092'])
-        produce_transcript(producer, topic,b"foo",b"bar")                    
+        produce_transcript(producer, topic,b"foo",b"bar","../test_logs")                    
         consumer = KafkaConsumer(topic,
                                   bootstrap_servers=['data-VirtualBox:9092'],
                                   auto_offset_reset='earliest',
@@ -75,7 +75,7 @@ class TestRadioMethods(unittest.TestCase):
                 message = file.read(1024)
                 producer.send(topic, key=str(t+(100*i)).encode("utf-8"), value=message)
                 
-        output = json.loads(consume_transcript(consumer))
+        output = json.loads(consume_transcript(consumer,"../test_logs"))
         words = output["transcript"].split(" ")
         self.assertTrue(output["timestamp"]==str(t))
         self.assertTrue(len(words)>10)
@@ -92,7 +92,7 @@ class TestRadioMethods(unittest.TestCase):
             base_message += os.urandom(4)
         message_in = io.BytesIO(base_message)
         message_out = io.BytesIO(base_message)
-        input_produce(message_in, producer, topic)
+        input_produce(message_in, producer, topic,"../test_logs")
         consumer = KafkaConsumer(topic,
                                   bootstrap_servers=['data-VirtualBox:9092'],
                                   auto_offset_reset='earliest',

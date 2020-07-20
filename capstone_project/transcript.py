@@ -11,27 +11,27 @@ from time import time
 
 
 #Log messages successfully published to kafka
-def on_send_success(record_metadata):
+def on_send_success(record_metadata, log_dir):
     ps_log = logging.getLogger("producer_success_logger")
     log_message = record_metadata.topic + " " + str(record_metadata.partition) + " " + str(record_metadata.offset)
     # add_unique handler for each log
     for hdlr in ps_log.handlers[:]:
         if isinstance(hdlr,logging.FileHandler):
             ps_log.removeHandler(hdlr)
-    handler = logging.FileHandler(f"./logs/kafka_success/kafka_producers/transcript_send_{str(time())}")        
+    handler = logging.FileHandler(f"{log_dir}/kafka_success/kafka_producers/transcript_send_{str(time())}")        
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S"))  
     ps_log.addHandler(handler)
     ps_log.info(log_message)
     handler.close()
 
 #Log messages successfully received from kafka    
-def on_receive_success(message):
+def on_receive_success(message, log_dir):
     cs_log = logging.getLogger("consumer_success_logger")  
     # add_unique handler for each log
     for hdlr in cs_log.handlers[:]:
         if isinstance(hdlr,logging.FileHandler):
             cs_log.removeHandler(hdlr)
-    handler = logging.FileHandler(f"./logs/kafka_success/kafka_consumers/transcript_receive_" + str(message.timestamp))        
+    handler = logging.FileHandler(f"{log_dir}/kafka_success/kafka_consumers/transcript_receive_${str(message.timestamp)}")        
     handler.setFormatter(logging.Formatter('%(message)s,%(asctime)s,%(levelname)s',"%Y-%m-%d %H:%M:%S")) 
     cs_log.addHandler(handler) 
     cs_log.info(f"{message.topic} {message.partition} {message.offset}")
@@ -52,13 +52,13 @@ def create_logger(name, log_file, level=logging.INFO):
     return logger
 
 #define loggers
-def logging_init(): 
+def logging_init(log_dir): 
     #define loggers
-    create_logger('general_error_logger', './logs/errors.log', level=logging.ERROR)
-    create_logger('producer_success_logger', f"./logs/kafka_success/kafka_producers/transcript_send_{str(time())}", level=logging.INFO)
-    create_logger('producer_failure_logger', './logs/kafka_failure/kafka_producers_failure.log', level=logging.ERROR)
-    create_logger('consumer_success_logger', f"./logs/kafka_success/kafka_consumers/transcript_receive_{str(time())}", level=logging.INFO)
-    create_logger('consumer_failure_logger', './logs/kafka_failure/kafka_consumers_failure.log', level=logging.ERROR)
+    create_logger('general_error_logger', f"{log_dir}/errors.log", level=logging.ERROR)
+    create_logger('producer_success_logger', f"{log_dir}/kafka_success/kafka_producers/transcript_send_{str(time())}", level=logging.INFO)
+    create_logger('producer_failure_logger', f"{log_dir}/kafka_failure/kafka_producers_failure.log", level=logging.ERROR)
+    create_logger('consumer_success_logger', f"{log_dir}/kafka_success/kafka_consumers/transcript_receive_{str(time())}", level=logging.INFO)
+    create_logger('consumer_failure_logger', f"{log_dir}/kafka_failure/kafka_consumers_failure.log", level=logging.ERROR)
 
 #Convert mp3 section to wav    
 def mp3_convert(section):
@@ -91,11 +91,11 @@ def get_value(data):
     return json.dumps(data,separators=(',', ':')).encode('utf-8')
 
 #send formatted transcript to kafka
-def produce_transcript(producer, topic, encoded_key, encoded_value):
-    producer.send(topic, key=encoded_key, value=encoded_value).add_callback(on_send_success).add_errback(on_send_error)
+def produce_transcript(producer, topic, encoded_key, encoded_value, log_dir):
+    producer.send(topic, key=encoded_key, value=encoded_value).add_callback(on_send_success, log_dir).add_errback(on_send_error)
 
 #consume radio stream from kafka   
-def consume_transcript(consumer):
+def consume_transcript(consumer, log_dir):
     cf_log = logging.getLogger("consumer_failure_logger")
     e_log = logging.getLogger("general_error_logger")
     #Initialise loop
@@ -104,7 +104,7 @@ def consume_transcript(consumer):
     #Iterate through each message in topic     
     for message in consumer:
         # add_unique handler for each log
-        on_receive_success(message)
+        on_receive_success(message, log_dir)
         
         try:
             time = int(message.key.decode("utf_8"))
@@ -143,8 +143,9 @@ def consume_transcript(consumer):
             return(encoded_value)
     
 def main():
-    logging_init()
     
+    log_dir = argv[3]
+    logging_init(log_dir)
     e_log = logging.getLogger("general_error_logger")
     
     #setup kafka topic and key from script arguments
@@ -172,9 +173,9 @@ def main():
     
     #consume messages, convert audio, transcript audio, then publish transcripts to kafka. Repeat Indefinitely.
     while True:
-        message = consume_transcript(consumer)
+        message = consume_transcript(consumer, log_dir)
         if message != 0:
-            produce_transcript(producer, topic_produce, encoded_key, message)
+            produce_transcript(producer, topic_produce, encoded_key, message, log_dir)
                
         
 if __name__ == "__main__":   

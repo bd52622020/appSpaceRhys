@@ -76,6 +76,7 @@ def main(args):
     e_log = logging.getLogger("general_error_logger")
     url1 = args[2]
     topic_produce = args[1] + '_mp3'
+    kafka_servers = list(args[4:])
         
     try:
         fileUrl = stream_get(url1)
@@ -85,7 +86,7 @@ def main(args):
 
     try:     
         #initialize kafka producer
-        producer = KafkaProducer(bootstrap_servers=['data-VirtualBox:9092'], retries=5)
+        producer = KafkaProducer(bootstrap_servers=kafka_servers, retries=5)
     except Exception as e:
         e_log.error(f"Kafka could not connect to bootstrap servers,",exc_info=e) 
         exit()

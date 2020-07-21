@@ -142,29 +142,24 @@ def consume_transcript(consumer, log_dir):
             
             return(encoded_value)
     
-def main():
+def main(args):
     
-    log_dir = argv[3]
+    log_dir = args[3]
     logging_init(log_dir)
     e_log = logging.getLogger("general_error_logger")
-    
-    #setup kafka topic and key from script arguments
-    try:
-        topic_consume = argv[1] + '_mp3'
-        produce_key = argv[1]
-        topic_produce = argv[2]        
-    except Exception as e:
-        e_log.error("Not enough arguments provided to radioConsumer script,",exc_info=e)
-        exit()
+    kafka_servers = list(args[4:])
+    topic_consume = args[1] + '_mp3'
+    produce_key = args[1]
+    topic_produce = args[2]
         
     try:
         #initialise kafka producer
-        producer = KafkaProducer(bootstrap_servers=['data-VirtualBox:9092'])
+        producer = KafkaProducer(bootstrap_servers=kafka_servers)
         consumer = KafkaConsumer(topic_consume,
-                                  bootstrap_servers=['data-VirtualBox:9092'],
+                                  bootstrap_servers=kafka_servers,
                                   auto_offset_reset='earliest',
                                   enable_auto_commit=True,
-                                  group_id='bbc_4_wav_group')             
+                                  group_id='transcription')             
     except Exception as e:
         e_log.error("Failed to initialise radioConsumer script",exc_info=e)
         exit()
@@ -179,4 +174,4 @@ def main():
                
         
 if __name__ == "__main__":   
-    main()
+    main(argv)

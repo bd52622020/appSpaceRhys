@@ -28,21 +28,31 @@ import edu.stanford.nlp.util.CoreMap
 import java.util.Properties
 import scala.collection.JavaConversions._
 import edu.stanford.nlp.util.logging._
+import scala.util.{Try, Success, Failure}
+import scala.io.Source
+import java.io.{FileNotFoundException, IOException}
 
 object textConsumer {
   
   def main(args: Array[String]){
-    streamFromKafka(Array("transcripts",
-        "/home/data/project/logs/kafka_success/kafka_consumers",
-        "local[*]",
-        "textConsume",
-        "mongodb://127.0.0.1:27017/radio.transcripts",
-	      "resolve_canonical_bootstrap_servers_only",
-	      "localhost:9092",
-	      "SparkConsumer",
-	      "earliest"))
+    if (args.length == 0){
+      println("configuration file path must be provided.")
+      System.exit(0)
+    }
+    val conf:Array[String] = getConf(args(0)).getOrElse(new Array(0))
+	  if (conf.isEmpty) {
+      println("Error reading configuration file.")
+    }
+	  else {  
+	    streamFromKafka(conf)
+	  }
   }
-  
+ 
+  //Loads configuration from file provided to spark with the --files 
+  def getConf(path:String): Try[Array[String]] =
+    Try { val source = Source.fromFile(path);
+          (for (line <- source.getLines) yield line).toArray}        
+        
   def streamFromKafka(args: Array[String]) {
      
       //Initialise Spark Streaming
@@ -104,7 +114,7 @@ object textConsumer {
                                   "'timestamps':" + Serialization.write(row._2).toString() + "," +
                                   "'raw_text':'" + row._3 + "'," +
                                   "'tokenized_text':" + Serialization.write(row._4).toString() + "," +
-                                  "'sentiment':'" + findSentiment(row._3) + "'}"})
+                                  "'sentiment':" + findSentiment(row._3) + "}"})
                     .map(row=> Document.parse(row)) //convert json string to bson
     }
     //Insert documents into mongo collection

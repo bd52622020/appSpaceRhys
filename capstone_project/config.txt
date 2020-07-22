@@ -1,0 +1,9 @@
+<transcript topic name>
+<kafka consumer log directory>
+<spark master>
+<app name>
+<mongo collection uri>
+<kafka dns resolution mode>
+<kafka uri>
+<kafka consumer group>
+<consumer offset reset policy>

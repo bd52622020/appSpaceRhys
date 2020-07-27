@@ -6,7 +6,7 @@ object sudoku {
   def main(args:Array[String]):Unit = {
     loadPuzzle(args(0)) match {
       case Some(puzzle) => println(validate(puzzle))
-      case None => sys.exit
+      case None => sys.exit(1)
     }
   }
   
